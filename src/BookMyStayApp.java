@@ -1,12 +1,15 @@
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
+
 public class BookMyStayApp {
 
     public static void main(String[] args) {
-        runUC3();
+        runUC4();
     }
 
-    // === UC3: Centralized Room Inventory Management ===
-    private static void runUC3() {
+    // === UC4: Room Search & Availability Check ===
+    private static void runUC4() {
         // Initialize room objects
         Room single = new SingleRoom();
         Room doubleRoom = new DoubleRoom();
@@ -15,25 +18,22 @@ public class BookMyStayApp {
         // Initialize centralized inventory
         RoomInventory inventory = new RoomInventory();
         inventory.addRoomType("Single Room", 5);
-        inventory.addRoomType("Double Room", 3);
+        inventory.addRoomType("Double Room", 0); // deliberately unavailable
         inventory.addRoomType("Suite Room", 2);
 
-        // Display inventory state
+        // Initialize search service
+        SearchService searchService = new SearchService(inventory);
+
+        // Perform search
         System.out.println("=== Hotel Booking System v1.0 ===\n");
+        System.out.println("Available Rooms for Guests:\n");
 
-        single.displayDetails();
-        System.out.println("Available: " + inventory.getAvailability("Single Room") + "\n");
+        List<Room> rooms = new ArrayList<>();
+        rooms.add(single);
+        rooms.add(doubleRoom);
+        rooms.add(suite);
 
-        doubleRoom.displayDetails();
-        System.out.println("Available: " + inventory.getAvailability("Double Room") + "\n");
-
-        suite.displayDetails();
-        System.out.println("Available: " + inventory.getAvailability("Suite Room") + "\n");
-
-        // Example of controlled update
-        inventory.updateAvailability("Single Room", 4);
-        System.out.println("\nAfter booking one Single Room:");
-        System.out.println("Single Room availability: " + inventory.getAvailability("Single Room"));
+        searchService.displayAvailableRooms(rooms);
     }
 }
 
@@ -47,6 +47,10 @@ abstract class Room {
         this.roomType = roomType;
         this.beds = beds;
         this.price = price;
+    }
+
+    public String getRoomType() {
+        return roomType;
     }
 
     public void displayDetails() {
@@ -77,30 +81,37 @@ class RoomInventory {
         availability = new HashMap<>();
     }
 
-    // Register a room type with initial availability
     public void addRoomType(String roomType, int count) {
         availability.put(roomType, count);
     }
 
-    // Retrieve current availability
     public int getAvailability(String roomType) {
         return availability.getOrDefault(roomType, 0);
     }
 
-    // Controlled update of availability
     public void updateAvailability(String roomType, int newCount) {
         if (availability.containsKey(roomType)) {
             availability.put(roomType, newCount);
-        } else {
-            System.out.println("Room type not found in inventory.");
         }
     }
+}
 
-    // Display full inventory state
-    public void displayInventory() {
-        System.out.println("=== Current Inventory ===");
-        for (String roomType : availability.keySet()) {
-            System.out.println(roomType + " -> Available: " + availability.get(roomType));
+// === Search Service (Read-Only Access) ===
+class SearchService {
+    private RoomInventory inventory;
+
+    public SearchService(RoomInventory inventory) {
+        this.inventory = inventory;
+    }
+
+    // Display only rooms with availability > 0
+    public void displayAvailableRooms(List<Room> rooms) {
+        for (Room room : rooms) {
+            int available = inventory.getAvailability(room.getRoomType());
+            if (available > 0) {
+                room.displayDetails();
+                System.out.println("Available: " + available + "\n");
+            }
         }
     }
 }
