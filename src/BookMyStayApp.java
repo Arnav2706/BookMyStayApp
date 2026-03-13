@@ -1,33 +1,39 @@
-
+import java.util.HashMap;
 public class BookMyStayApp {
 
     public static void main(String[] args) {
-        runUC2();
+        runUC3();
     }
 
-    // === UC2: Basic Room Types & Static Availability ===
-    private static void runUC2() {
+    // === UC3: Centralized Room Inventory Management ===
+    private static void runUC3() {
         // Initialize room objects
         Room single = new SingleRoom();
         Room doubleRoom = new DoubleRoom();
         Room suite = new SuiteRoom();
 
-        // Static availability representation
-        int singleAvailability = 5;
-        int doubleAvailability = 3;
-        int suiteAvailability = 2;
+        // Initialize centralized inventory
+        RoomInventory inventory = new RoomInventory();
+        inventory.addRoomType("Single Room", 5);
+        inventory.addRoomType("Double Room", 3);
+        inventory.addRoomType("Suite Room", 2);
 
-        // Display room details and availability
+        // Display inventory state
         System.out.println("=== Hotel Booking System v1.0 ===\n");
 
         single.displayDetails();
-        System.out.println("Available: " + singleAvailability + "\n");
+        System.out.println("Available: " + inventory.getAvailability("Single Room") + "\n");
 
         doubleRoom.displayDetails();
-        System.out.println("Available: " + doubleAvailability + "\n");
+        System.out.println("Available: " + inventory.getAvailability("Double Room") + "\n");
 
         suite.displayDetails();
-        System.out.println("Available: " + suiteAvailability + "\n");
+        System.out.println("Available: " + inventory.getAvailability("Suite Room") + "\n");
+
+        // Example of controlled update
+        inventory.updateAvailability("Single Room", 4);
+        System.out.println("\nAfter booking one Single Room:");
+        System.out.println("Single Room availability: " + inventory.getAvailability("Single Room"));
     }
 }
 
@@ -61,4 +67,40 @@ class DoubleRoom extends Room {
 
 class SuiteRoom extends Room {
     public SuiteRoom() { super("Suite Room", 3, 150.0); }
+}
+
+// === Centralized Inventory Manager ===
+class RoomInventory {
+    private HashMap<String, Integer> availability;
+
+    public RoomInventory() {
+        availability = new HashMap<>();
+    }
+
+    // Register a room type with initial availability
+    public void addRoomType(String roomType, int count) {
+        availability.put(roomType, count);
+    }
+
+    // Retrieve current availability
+    public int getAvailability(String roomType) {
+        return availability.getOrDefault(roomType, 0);
+    }
+
+    // Controlled update of availability
+    public void updateAvailability(String roomType, int newCount) {
+        if (availability.containsKey(roomType)) {
+            availability.put(roomType, newCount);
+        } else {
+            System.out.println("Room type not found in inventory.");
+        }
+    }
+
+    // Display full inventory state
+    public void displayInventory() {
+        System.out.println("=== Current Inventory ===");
+        for (String roomType : availability.keySet()) {
+            System.out.println(roomType + " -> Available: " + availability.get(roomType));
+        }
+    }
 }
