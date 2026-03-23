@@ -185,3 +185,64 @@ class BookingService {
         }
     }
 }
+// === Add-On Service Class ===
+class AddOnService {
+    private String serviceName;
+    private double cost;
+
+    public AddOnService(String serviceName, double cost) {
+        this.serviceName = serviceName;
+        this.cost = cost;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public double getCost() {
+        return cost;
+    }
+
+    public void displayService() {
+        System.out.println("Service: " + serviceName + " | Cost: $" + cost);
+    }
+}
+
+// === Add-On Service Manager ===
+class AddOnServiceManager {
+    private HashMap<String, List<AddOnService>> reservationServices;
+
+    public AddOnServiceManager() {
+        reservationServices = new HashMap<>();
+    }
+
+    // Attach services to a reservation ID
+    public void addServices(String reservationId, List<AddOnService> services) {
+        reservationServices.putIfAbsent(reservationId, new ArrayList<>());
+        reservationServices.get(reservationId).addAll(services);
+    }
+
+    // Calculate total additional cost
+    public double calculateTotalCost(String reservationId) {
+        double total = 0.0;
+        List<AddOnService> services = reservationServices.getOrDefault(reservationId, new ArrayList<>());
+        for (AddOnService s : services) {
+            total += s.getCost();
+        }
+        return total;
+    }
+
+    // Display services for a reservation
+    public void displayServices(String reservationId) {
+        List<AddOnService> services = reservationServices.getOrDefault(reservationId, new ArrayList<>());
+        if (services.isEmpty()) {
+            System.out.println("No add-on services selected.");
+        } else {
+            System.out.println("Add-On Services for Reservation " + reservationId + ":");
+            for (AddOnService s : services) {
+                s.displayService();
+            }
+            System.out.println("Total Additional Cost: $" + calculateTotalCost(reservationId));
+        }
+    }
+}
