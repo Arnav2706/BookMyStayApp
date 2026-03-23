@@ -7,170 +7,40 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * BookMyStayApp.java
- *
- * Demonstrates Use Cases 1–6 for a Hotel Booking System.
- * Each use case builds incrementally, showcasing key Java concepts:
- * - UC1: Application Entry & Welcome Message
- * - UC2: Basic Room Types & Static Availability
- * - UC3: Centralized Room Inventory Management
- * - UC4: Room Search & Availability Check
- * - UC5: Booking Request Queue (FIFO)
- * - UC6: Reservation Confirmation & Room Allocation
- *
- * @author YourName
- * @version 1.0
- */
 public class BookMyStayApp {
 
     public static void main(String[] args) {
-        // Uncomment the use case you want to run
-        // runUC1();
-        // runUC2();
-        // runUC3();
-        // runUC4();
-        // runUC5();
         runUC6();
     }
 
-    // === UC1: Application Entry & Welcome Message ===
-    // Purpose: Establish a predictable starting point for the application.
-    // - Demonstrates how execution begins in Java via the main() method.
-    // - Prints a welcome message, application name, and version.
-    private static void runUC1() {
-        System.out.println("Welcome to the Hotel Booking System!");
-        System.out.println("Application: BookMyStayApp");
-        System.out.println("Version: 1.0");
-    }
-
-    // === UC2: Basic Room Types & Static Availability ===
-    // Purpose: Introduce object modeling with abstraction and inheritance.
-    // - Defines abstract Room class with common attributes.
-    // - Concrete classes (SingleRoom, DoubleRoom, SuiteRoom) extend Room.
-    // - Availability stored in simple variables (int counts).
-    private static void runUC2() {
-        Room single = new SingleRoom();
-        Room doubleRoom = new DoubleRoom();
-        Room suite = new SuiteRoom();
-
-        int singleAvailability = 5;
-        int doubleAvailability = 3;
-        int suiteAvailability = 2;
-
-        System.out.println("=== Hotel Booking System v1.0 ===\n");
-
-        single.displayDetails();
-        System.out.println("Available: " + singleAvailability + "\n");
-
-        doubleRoom.displayDetails();
-        System.out.println("Available: " + doubleAvailability + "\n");
-
-        suite.displayDetails();
-        System.out.println("Available: " + suiteAvailability + "\n");
-    }
-
-    // === UC3: Centralized Room Inventory Management ===
-    // Purpose: Replace scattered availability variables with a centralized structure.
-    // - Introduces RoomInventory class encapsulating availability logic.
-    // - Uses HashMap<String, Integer> for room type → availability mapping.
-    // - Provides O(1) lookup and updates.
-    private static void runUC3() {
-        RoomInventory inventory = new RoomInventory();
-        inventory.addRoomType("Single Room", 5);
-        inventory.addRoomType("Double Room", 3);
-        inventory.addRoomType("Suite Room", 2);
-
-        Room single = new SingleRoom();
-        Room doubleRoom = new DoubleRoom();
-        Room suite = new SuiteRoom();
-
-        System.out.println("=== Hotel Booking System v1.0 ===\n");
-
-        single.displayDetails();
-        System.out.println("Available: " + inventory.getAvailability("Single Room") + "\n");
-
-        doubleRoom.displayDetails();
-        System.out.println("Available: " + inventory.getAvailability("Double Room") + "\n");
-
-        suite.displayDetails();
-        System.out.println("Available: " + inventory.getAvailability("Suite Room") + "\n");
-    }
-
-    // === UC4: Room Search & Availability Check ===
-    // Purpose: Enable guests to view available rooms without modifying state.
-    // - SearchService provides read-only access to inventory.
-    // - Filters out rooms with zero availability.
-    // - Separation of concerns: search logic is isolated from booking logic.
-    private static void runUC4() {
-        RoomInventory inventory = new RoomInventory();
-        inventory.addRoomType("Single Room", 5);
-        inventory.addRoomType("Double Room", 0); // deliberately unavailable
-        inventory.addRoomType("Suite Room", 2);
-
-        SearchService searchService = new SearchService(inventory);
-
-        List<Room> rooms = new ArrayList<>();
-        rooms.add(new SingleRoom());
-        rooms.add(new DoubleRoom());
-        rooms.add(new SuiteRoom());
-
-        System.out.println("=== Hotel Booking System v1.0 ===\n");
-        System.out.println("Available Rooms for Guests:\n");
-
-        searchService.displayAvailableRooms(rooms);
-    }
-
-    // === UC5: Booking Request Queue (FIFO) ===
-    // Purpose: Handle multiple booking requests fairly.
-    // - Introduces Reservation class representing guest intent.
-    // - BookingRequestQueue stores requests in FIFO order.
-    // - No inventory mutation occurs at this stage.
-    private static void runUC5() {
-        RoomInventory inventory = new RoomInventory();
-        inventory.addRoomType("Single Room", 5);
-        inventory.addRoomType("Double Room", 3);
-        inventory.addRoomType("Suite Room", 2);
-
-        BookingRequestQueue requestQueue = new BookingRequestQueue();
-        requestQueue.addRequest(new Reservation("Alice", "Single Room"));
-        requestQueue.addRequest(new Reservation("Bob", "Suite Room"));
-        requestQueue.addRequest(new Reservation("Charlie", "Double Room"));
-
-        System.out.println("=== Hotel Booking System v1.0 ===\n");
-        System.out.println("Booking Requests (waiting to be processed):\n");
-        requestQueue.displayRequests();
-    }
-
     // === UC6: Reservation Confirmation & Room Allocation ===
-    // Purpose: Confirm booking requests by assigning rooms safely.
-    // - BookingService processes requests in FIFO order.
-    // - Generates unique room IDs using UUID.
-    // - Uses HashMap<String, Set<String>> to track allocated IDs.
-    // - Updates inventory immediately after allocation.
-    // - Prevents double-booking by enforcing uniqueness in Set.
     private static void runUC6() {
+        // Initialize inventory
         RoomInventory inventory = new RoomInventory();
         inventory.addRoomType("Single Room", 2);
         inventory.addRoomType("Double Room", 1);
         inventory.addRoomType("Suite Room", 1);
 
+        // Initialize booking request queue
         BookingRequestQueue requestQueue = new BookingRequestQueue();
         requestQueue.addRequest(new Reservation("Alice", "Single Room"));
         requestQueue.addRequest(new Reservation("Bob", "Suite Room"));
         requestQueue.addRequest(new Reservation("Charlie", "Double Room"));
         requestQueue.addRequest(new Reservation("Diana", "Single Room")); // may fail if no availability
 
+        // Initialize booking service
         BookingService bookingService = new BookingService(inventory);
 
         System.out.println("=== Hotel Booking System v1.0 ===\n");
         System.out.println("Processing Booking Requests:\n");
 
+        // Process requests in FIFO order
         while (!requestQueue.isEmpty()) {
             Reservation r = requestQueue.getNextRequest();
             bookingService.processReservation(r);
         }
 
+        // Display final inventory state
         System.out.println("\nFinal Inventory State:");
         inventory.displayInventory();
     }
@@ -239,23 +109,139 @@ class RoomInventory {
     }
 }
 
-// === Search Service (Read-Only Access) ===
-class SearchService {
-    private RoomInventory inventory;
+// === Reservation Class ===
+class Reservation {
+    private String guestName;
+    private String requestedRoomType;
 
-    public SearchService(RoomInventory inventory) {
-        this.inventory = inventory;
+    public Reservation(String guestName, String requestedRoomType) {
+        this.guestName = guestName;
+        this.requestedRoomType = requestedRoomType;
     }
 
-    public void displayAvailableRooms(List<Room> rooms) {
-        for (Room room : rooms) {
-            int available = inventory.getAvailability(room.getRoomType());
-            if (available > 0) {
-                room.displayDetails();
-                System.out.println("Available: " + available + "\n");
+    public String getGuestName() {
+        return guestName;
+    }
+
+    public String getRequestedRoomType() {
+        return requestedRoomType;
+    }
+}
+
+// === Booking Request Queue (FIFO) ===
+class BookingRequestQueue {
+    private Queue<Reservation> requestQueue;
+
+    public BookingRequestQueue() {
+        requestQueue = new LinkedList<>();
+    }
+
+    public void addRequest(Reservation reservation) {
+        requestQueue.add(reservation);
+    }
+
+    public Reservation getNextRequest() {
+        return requestQueue.poll();
+    }
+
+    public boolean isEmpty() {
+        return requestQueue.isEmpty();
+    }
+}
+
+// === Booking Service (Allocation & Confirmation) ===
+class BookingService {
+    private RoomInventory inventory;
+    private HashMap<String, Set<String>> allocatedRooms;
+
+    public BookingService(RoomInventory inventory) {
+        this.inventory = inventory;
+        this.allocatedRooms = new HashMap<>();
+    }
+
+    public void processReservation(Reservation reservation) {
+        String roomType = reservation.getRequestedRoomType();
+        int available = inventory.getAvailability(roomType);
+
+        if (available > 0) {
+            // Generate unique room ID
+            String roomId = UUID.randomUUID().toString();
+
+            // Ensure uniqueness with Set
+            allocatedRooms.putIfAbsent(roomType, new HashSet<>());
+            allocatedRooms.get(roomType).add(roomId);
+
+            // Update inventory immediately
+            inventory.updateAvailability(roomType, available - 1);
+
+            // Confirm reservation
+            System.out.println("Reservation Confirmed: " + reservation.getGuestName() +
+                    " | Room Type: " + roomType +
+                    " | Room ID: " + roomId);
+        } else {
+            System.out.println("Reservation Failed: " + reservation.getGuestName() +
+                    " | Room Type: " + roomType +
+                    " | Reason: No availability");
+        }
+    }
+}
+// === Booking History Class ===
+class BookingHistory {
+    private List<Reservation> confirmedBookings;
+
+    public BookingHistory() {
+        confirmedBookings = new ArrayList<>();
+    }
+
+    // Add confirmed reservation to history
+    public void addReservation(Reservation reservation) {
+        confirmedBookings.add(reservation);
+    }
+
+    // Retrieve all reservations
+    public List<Reservation> getAllReservations() {
+        return confirmedBookings;
+    }
+
+    // Display booking history
+    public void displayHistory() {
+        System.out.println("\n=== Booking History ===");
+        if (confirmedBookings.isEmpty()) {
+            System.out.println("No confirmed bookings yet.");
+        } else {
+            for (Reservation r : confirmedBookings) {
+                System.out.println("Guest: " + r.getGuestName() +
+                        " | Room Type: " + r.getRequestedRoomType());
             }
         }
     }
 }
 
-//
+// === Booking Report Service ===
+class BookingReportService {
+    private BookingHistory history;
+
+    public BookingReportService(BookingHistory history) {
+        this.history = history;
+    }
+
+    // Generate summary report
+    public void generateSummaryReport() {
+        System.out.println("\n=== Booking Summary Report ===");
+        List<Reservation> bookings = history.getAllReservations();
+
+        int totalBookings = bookings.size();
+        System.out.println("Total Confirmed Bookings: " + totalBookings);
+
+        // Count bookings per room type
+        HashMap<String, Integer> roomTypeCount = new HashMap<>();
+        for (Reservation r : bookings) {
+            roomTypeCount.put(r.getRequestedRoomType(),
+                    roomTypeCount.getOrDefault(r.getRequestedRoomType(), 0) + 1);
+        }
+
+        for (String roomType : roomTypeCount.keySet()) {
+            System.out.println(roomType + " -> " + roomTypeCount.get(roomType) + " bookings");
+        }
+    }
+}
