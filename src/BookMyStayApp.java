@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Stack;
+import java.io.*;
 
 public class BookMyStayApp {
 
@@ -82,7 +83,8 @@ class SuiteRoom extends Room {
 }
 
 // === Centralized Inventory Manager ===
-class RoomInventory {
+class RoomInventory implements Serializable {
+    private static final long serialVersionUID = 1L;
     private HashMap<String, Integer> availability;
 
     public RoomInventory() {
@@ -115,7 +117,8 @@ class RoomInventory {
 }
 
 // === Reservation Class ===
-class Reservation {
+class Reservation implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String guestName;
     private String requestedRoomType;
 
@@ -267,7 +270,8 @@ class AddOnServiceManager {
 }
 
 // === Booking History Class ===
-class BookingHistory {
+class BookingHistory implements Serializable {
+    private static final long serialVersionUID = 1L;
     private List<Reservation> confirmedBookings;
 
     public BookingHistory() {
@@ -419,5 +423,48 @@ class ConcurrentBookingProcessor {
                 e.printStackTrace();
             }
         }
+    }
+}
+
+// === Persistence Service ===
+class PersistenceService {
+    private static final String FILE_NAME = "booking_system_state.dat";
+
+    public static void saveState(RoomInventory inventory, BookingHistory history) {
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(FILE_NAME))) {
+            out.writeObject(inventory);
+            out.writeObject(history);
+            System.out.println("System state saved successfully.");
+        } catch (IOException e) {
+            System.out.println("Failed to save system state: " + e.getMessage());
+        }
+    }
+
+    public static SystemState loadState() {
+        File file = new File(FILE_NAME);
+        if (!file.exists()) {
+            System.out.println("No previous state found. Starting fresh.");
+            return null;
+        }
+
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(FILE_NAME))) {
+            RoomInventory inventory = (RoomInventory) in.readObject();
+            BookingHistory history = (BookingHistory) in.readObject();
+            System.out.println("System state loaded successfully.");
+            return new SystemState(inventory, history);
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Failed to load state or corrupted file: " + e.getMessage());
+            return null;
+        }
+    }
+}
+
+class SystemState {
+    public RoomInventory inventory;
+    public BookingHistory history;
+
+    public SystemState(RoomInventory inventory, BookingHistory history) {
+        this.inventory = inventory;
+        this.history = history;
     }
 }
