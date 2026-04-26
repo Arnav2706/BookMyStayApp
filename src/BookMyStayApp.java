@@ -246,3 +246,64 @@ class AddOnServiceManager {
         }
     }
 }
+
+// === Booking History Class ===
+class BookingHistory {
+    private List<Reservation> confirmedBookings;
+
+    public BookingHistory() {
+        confirmedBookings = new ArrayList<>();
+    }
+
+    // Add confirmed reservation to history
+    public void addReservation(Reservation reservation) {
+        confirmedBookings.add(reservation);
+    }
+
+    // Retrieve all reservations
+    public List<Reservation> getAllReservations() {
+        return confirmedBookings;
+    }
+
+    // Display booking history
+    public void displayHistory() {
+        System.out.println("\n=== Booking History ===");
+        if (confirmedBookings.isEmpty()) {
+            System.out.println("No confirmed bookings yet.");
+        } else {
+            for (Reservation r : confirmedBookings) {
+                System.out.println("Guest: " + r.getGuestName() +
+                        " | Room Type: " + r.getRequestedRoomType());
+            }
+        }
+    }
+}
+
+// === Booking Report Service ===
+class BookingReportService {
+    private BookingHistory history;
+
+    public BookingReportService(BookingHistory history) {
+        this.history = history;
+    }
+
+    // Generate summary report
+    public void generateSummaryReport() {
+        System.out.println("\n=== Booking Summary Report ===");
+        List<Reservation> bookings = history.getAllReservations();
+
+        int totalBookings = bookings.size();
+        System.out.println("Total Confirmed Bookings: " + totalBookings);
+
+        // Count bookings per room type
+        HashMap<String, Integer> roomTypeCount = new HashMap<>();
+        for (Reservation r : bookings) {
+            roomTypeCount.put(r.getRequestedRoomType(),
+                    roomTypeCount.getOrDefault(r.getRequestedRoomType(), 0) + 1);
+        }
+
+        for (String roomType : roomTypeCount.keySet()) {
+            System.out.println(roomType + " -> " + roomTypeCount.get(roomType) + " bookings");
+        }
+    }
+}
