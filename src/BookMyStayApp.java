@@ -168,7 +168,7 @@ class BookingService {
         return allocatedRooms;
     }
 
-    public void processReservation(Reservation reservation) {
+    public synchronized void processReservation(Reservation reservation) {
         try {
             InvalidBookingValidator.validateReservation(reservation, inventory);
 
@@ -379,5 +379,45 @@ class CancellationService {
         inventory.updateAvailability(roomType, currentAvailability + 1);
 
         System.out.println("Reservation Cancelled | Room Type: " + roomType + " | Room ID: " + roomId);
+    }
+}
+
+// === Concurrent Booking Processor ===
+class ConcurrentBookingProcessor {
+    private BookingService bookingService;
+    private BookingRequestQueue requestQueue;
+
+    public ConcurrentBookingProcessor(BookingService bookingService, BookingRequestQueue requestQueue) {
+        this.bookingService = bookingService;
+        this.requestQueue = requestQueue;
+    }
+
+    public void startProcessing(int threadCount) {
+        Thread[] threads = new Thread[threadCount];
+        for (int i = 0; i < threadCount; i++) {
+            threads[i] = new Thread(() -> {
+                while (true) {
+                    Reservation r;
+                    synchronized (requestQueue) {
+                        if (requestQueue.isEmpty()) {
+                            break;
+                        }
+                        r = requestQueue.getNextRequest();
+                    }
+                    if (r != null) {
+                        bookingService.processReservation(r);
+                    }
+                }
+            });
+            threads[i].start();
+        }
+
+        for (int i = 0; i < threadCount; i++) {
+            try {
+                threads[i].join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
