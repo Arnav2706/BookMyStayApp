@@ -107,6 +107,10 @@ class RoomInventory {
             System.out.println(roomType + " -> Available: " + availability.get(roomType));
         }
     }
+
+    public boolean hasRoomType(String roomType) {
+        return availability.containsKey(roomType);
+    }
 }
 
 // === Reservation Class ===
@@ -160,28 +164,38 @@ class BookingService {
     }
 
     public void processReservation(Reservation reservation) {
-        String roomType = reservation.getRequestedRoomType();
-        int available = inventory.getAvailability(roomType);
+        try {
+            InvalidBookingValidator.validateReservation(reservation, inventory);
 
-        if (available > 0) {
-            // Generate unique room ID
-            String roomId = UUID.randomUUID().toString();
+            String roomType = reservation.getRequestedRoomType();
+            int available = inventory.getAvailability(roomType);
 
-            // Ensure uniqueness with Set
-            allocatedRooms.putIfAbsent(roomType, new HashSet<>());
-            allocatedRooms.get(roomType).add(roomId);
+            if (available > 0) {
+                if (available - 1 < 0) {
+                    throw new InvalidBookingException("Inventory cannot be negative.");
+                }
 
-            // Update inventory immediately
-            inventory.updateAvailability(roomType, available - 1);
+                // Generate unique room ID
+                String roomId = UUID.randomUUID().toString();
 
-            // Confirm reservation
-            System.out.println("Reservation Confirmed: " + reservation.getGuestName() +
-                    " | Room Type: " + roomType +
-                    " | Room ID: " + roomId);
-        } else {
-            System.out.println("Reservation Failed: " + reservation.getGuestName() +
-                    " | Room Type: " + roomType +
-                    " | Reason: No availability");
+                // Ensure uniqueness with Set
+                allocatedRooms.putIfAbsent(roomType, new HashSet<>());
+                allocatedRooms.get(roomType).add(roomId);
+
+                // Update inventory immediately
+                inventory.updateAvailability(roomType, available - 1);
+
+                // Confirm reservation
+                System.out.println("Reservation Confirmed: " + reservation.getGuestName() +
+                        " | Room Type: " + roomType +
+                        " | Room ID: " + roomId);
+            } else {
+                System.out.println("Reservation Failed: " + reservation.getGuestName() +
+                        " | Room Type: " + roomType +
+                        " | Reason: No availability");
+            }
+        } catch (InvalidBookingException e) {
+            System.out.println("Reservation Error: " + reservation.getGuestName() + " | " + e.getMessage());
         }
     }
 }
@@ -304,6 +318,27 @@ class BookingReportService {
 
         for (String roomType : roomTypeCount.keySet()) {
             System.out.println(roomType + " -> " + roomTypeCount.get(roomType) + " bookings");
+        }
+    }
+}
+
+// === Custom Exception ===
+class InvalidBookingException extends Exception {
+    public InvalidBookingException(String message) {
+        super(message);
+    }
+}
+
+// === Invalid Booking Validator ===
+class InvalidBookingValidator {
+    public static void validateReservation(Reservation reservation, RoomInventory inventory) throws InvalidBookingException {
+        String roomType = reservation.getRequestedRoomType();
+        if (roomType == null || roomType.trim().isEmpty()) {
+            throw new InvalidBookingException("Room type cannot be empty.");
+        }
+
+        if (!inventory.hasRoomType(roomType)) {
+            throw new InvalidBookingException("Invalid room type requested: " + roomType);
         }
     }
 }
