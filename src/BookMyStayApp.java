@@ -6,6 +6,7 @@ import java.util.Queue;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.Stack;
 
 public class BookMyStayApp {
 
@@ -161,6 +162,10 @@ class BookingService {
     public BookingService(RoomInventory inventory) {
         this.inventory = inventory;
         this.allocatedRooms = new HashMap<>();
+    }
+
+    public HashMap<String, Set<String>> getAllocatedRooms() {
+        return allocatedRooms;
     }
 
     public void processReservation(Reservation reservation) {
@@ -340,5 +345,39 @@ class InvalidBookingValidator {
         if (!inventory.hasRoomType(roomType)) {
             throw new InvalidBookingException("Invalid room type requested: " + roomType);
         }
+    }
+}
+
+// === Cancellation Service ===
+class CancellationService {
+    private RoomInventory inventory;
+    private HashMap<String, Set<String>> allocatedRooms;
+    private Stack<String> rollbackStack;
+
+    public CancellationService(RoomInventory inventory, HashMap<String, Set<String>> allocatedRooms) {
+        this.inventory = inventory;
+        this.allocatedRooms = allocatedRooms;
+        this.rollbackStack = new Stack<>();
+    }
+
+    public void cancelReservation(String roomType, String roomId) throws InvalidBookingException {
+        if (roomType == null || roomId == null) {
+            throw new InvalidBookingException("Room type and ID must be provided.");
+        }
+
+        Set<String> rooms = allocatedRooms.get(roomType);
+        if (rooms == null || !rooms.contains(roomId)) {
+            throw new InvalidBookingException("Reservation does not exist or already cancelled.");
+        }
+
+        // Rollback state
+        rooms.remove(roomId);
+        rollbackStack.push(roomId);
+
+        // Restore inventory
+        int currentAvailability = inventory.getAvailability(roomType);
+        inventory.updateAvailability(roomType, currentAvailability + 1);
+
+        System.out.println("Reservation Cancelled | Room Type: " + roomType + " | Room ID: " + roomId);
     }
 }
